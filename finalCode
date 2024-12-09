@@ -1,0 +1,88 @@
+#include <Servo.h>
+
+// Servo objects
+Servo servo1, servo2, servo3, servo4;
+
+// IR sensor pins
+const int irSensor1Pin = 2; // First IR sensor
+const int irSensor2Pin = 3; // Second IR sensor
+
+// Servo pins
+const int servo1Pin = 9;
+const int servo2Pin = 10;
+const int servo3Pin = 11;
+const int servo4Pin = 12;
+
+// Sensor states
+int sensor1Value = 0;
+int sensor2Value = 0;
+bool motionDetected = false; // Prevents repeated triggering
+
+void setup() {
+  // Initialize serial communication for debugging
+  Serial.begin(9600);
+
+  // Set up IR sensors
+  pinMode(irSensor1Pin, INPUT);
+  pinMode(irSensor2Pin, INPUT);
+
+  // Attach servos
+  servo1.attach(servo1Pin);
+  servo2.attach(servo2Pin);
+  servo3.attach(servo3Pin);
+  servo4.attach(servo4Pin);
+
+  // Set initial positions for servos
+  servo1.write(180); // Normal orientation
+  servo2.write(0);   // Upside-down
+  servo3.write(180); // Normal orientation
+  servo4.write(0);   // Upside-down
+
+  delay(500); // Stabilize initial setup
+}
+
+void loop() {
+  // Read IR sensor values
+  sensor1Value = digitalRead(irSensor1Pin);
+  sensor2Value = digitalRead(irSensor2Pin);
+
+  // Debugging output for sensors
+  Serial.print("Sensor 1: ");
+  Serial.print(sensor1Value);
+  Serial.print(" | Sensor 2: ");
+  Serial.println(sensor2Value);
+
+  // Check if both sensors detect motion
+  if (sensor1Value == HIGH && sensor2Value == HIGH && !motionDetected) {
+    delay(50); // Small debounce delay
+
+    // Confirm sensors are still detecting motion
+    if (digitalRead(irSensor1Pin) == HIGH && digitalRead(irSensor2Pin) == HIGH) {
+      motionDetected = true; // Motion detected, prevent re-triggering
+      activateServos();      // Activate servos
+    }
+  }
+
+  // Reset the motion detection state when no motion is detected
+  if (sensor1Value == LOW && sensor2Value == LOW) {
+    motionDetected = false;
+  }
+}
+
+void activateServos() {
+  Serial.println("Activating Servos!"); // Debugging output
+
+  // Move servos to active positions
+  servo1.write(0);
+  servo2.write(180);
+  servo3.write(0);
+  servo4.write(180);
+  delay(1000); // Allow servos to complete motion
+
+  // Return servos to starting positions
+  servo1.write(180);
+  servo2.write(0);
+  servo3.write(180);
+  servo4.write(0);
+  delay(1000); // Allow servos to reset
+}
